@@ -13,6 +13,14 @@ jobs:
   PUSH-DOCKER-IMAGE:
     runs-on: ubuntu-latest
     steps:
+    - name: Notify Slack on failure
+      uses: slackapi/slack-github-action@v1
+      with:
+        payload: |
+          {"text": ":blue_circle: *Pipeline Started*\nRepo: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
     - uses: actions/checkout@v4
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -42,6 +50,7 @@ jobs:
 
     - name: Push image
       run: docker push docker.io/zero101010/gs-rest-service:${{ github.sha }}
+
 
   RUN-ON-EC2:
     runs-on: ubuntu-latest
@@ -99,3 +108,22 @@ jobs:
           echo "SSM command failed with status: $STATUS"
           exit 1
         fi
+
+    - name: Notify Slack on failure
+      if: failure()
+      uses: slackapi/slack-github-action@v1
+      with:
+        payload: |
+          {"text": ":red_circle: *RUN-ON-EC2 failed*\nRepo: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    - name: Notify Slack on Success
+      if: success()
+      uses: slackapi/slack-github-action@v1
+      with:
+        payload: |
+          {"text": ":green_circle: *RUN-ON-EC2 Success*\nRepo: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
