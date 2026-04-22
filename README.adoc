@@ -1,3 +1,5 @@
+[![Service Availability Monitor](https://github.com/zero101010/gs-rest-service/actions/workflows/monitor.yml/badge.svg)](https://github.com/zero101010/gs-rest-service/actions/workflows/monitor.yml)
+
 :spring_version: current
 :toc:
 :project_id: gs-rest-service
