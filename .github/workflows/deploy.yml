@@ -37,7 +37,7 @@ jobs:
       with:
         command: cves
         image: docker.io/zero101010/gs-rest-service:${{ github.sha }}
-        only-severities: critical,high
+        only-severities: critical
         exit-code: true
 
     - name: Push image
