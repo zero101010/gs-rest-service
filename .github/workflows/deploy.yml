@@ -45,7 +45,7 @@ jobs:
 
   RUN-ON-EC2:
     runs-on: ubuntu-latest
-    # needs: PUSH-DOCKER-IMAGE
+    needs: PUSH-DOCKER-IMAGE
     steps:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -68,7 +68,7 @@ jobs:
         COMMAND_ID=$(aws ssm send-command \
           --instance-ids "${{ steps.get-instance.outputs.instance_id }}" \
           --document-name "AWS-RunShellScript" \
-          --parameters 'commands=["docker stop $(docker ps -aq)", "docker run -d -p 777:777 docker.io/zero101010/gs-rest-service:${{ github.sha }}","docker image prune -a -f"]' \
+          --parameters 'commands=["docker stop $(docker ps -aq)", "docker run -d -p 777:777 docker.io/zero101010/gs-rest-service:${{ github.sha }}" ]' \
           --query "Command.CommandId" \
           --output text)
 
