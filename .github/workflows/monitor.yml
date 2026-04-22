@@ -1,0 +1,50 @@
+name: Service Availability Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes
+  workflow_dispatch:
+
+jobs:
+  CHECK:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check service availability
+      id: check
+      run: |
+        URL="https://gs-rest-service.igor-aws.link/greeting"
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL")
+        echo "status=$STATUS" >> $GITHUB_OUTPUT
+        echo "url=$URL" >> $GITHUB_OUTPUT
+
+        if [ "$STATUS" = "200" ]; then
+          echo "result=up" >> $GITHUB_OUTPUT
+          echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') | UP | HTTP $STATUS | $URL"
+        else
+          echo "result=down" >> $GITHUB_OUTPUT
+          echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') | DOWN | HTTP $STATUS | $URL"
+        fi
+
+    - name: Notify Slack — service DOWN
+      if: steps.check.outputs.result == 'down'
+      uses: slackapi/slack-github-action@v1
+      with:
+        payload: |
+          {"text": "🔴 *Service DOWN*\nURL: ${{ steps.check.outputs.url }}\nHTTP status: ${{ steps.check.outputs.status }}\nTime: ${{ github.event.repository.updated_at }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    - name: Notify Slack — service UP
+      if: steps.check.outputs.result == 'up'
+      uses: slackapi/slack-github-action@v1
+      with:
+        payload: |
+          {"text": "🟢 *Service UP*\nURL: ${{ steps.check.outputs.url }}\nHTTP status: ${{ steps.check.outputs.status }}\nTime: ${{ github.event.repository.updated_at }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    - name: Fail job if service is down
+      if: steps.check.outputs.result == 'down'
+      run: exit 1
