@@ -29,8 +29,8 @@ jobs:
         push: false
         load: true
         tags: docker.io/zero101010/gs-rest-service:${{ github.sha }}
-        context: .
-        file: Dockerfile
+        context: complete
+        file: complete/Dockerfile
 
     - name: Docker Scout CVEs
       uses: docker/scout-action@v1
