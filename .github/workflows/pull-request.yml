@@ -1,0 +1,32 @@
+name: Pull Request CI
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  BUILD-AND-TEST:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Install dependencies
+      working-directory: ./complete
+      run: ./mvnw --batch-mode dependency:go-offline
+
+    - name: Build and test
+      working-directory: ./complete
+      run: ./mvnw --batch-mode package
+
+    - name: Upload JAR artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-jar
+        path: complete/target/rest-service-complete-*.jar
+        retention-days: 1
